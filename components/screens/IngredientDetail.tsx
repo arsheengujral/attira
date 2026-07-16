@@ -1,6 +1,6 @@
 'use client';
 
-import { INGREDIENTS } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 
 const LEARN_BG = 'linear-gradient(168deg,#F1EBF6 0%,#F8F3EB 55%,#F2ECE1 100%)';
@@ -9,7 +9,8 @@ const rise = (d: number): React.CSSProperties => ({
 });
 
 export function IngredientDetail({ id, onBack }: { id: string; onBack: () => void }) {
-  const ing = INGREDIENTS.find((x) => x.id === id);
+  const data = useSkinData();
+  const ing = data.ingredients.find((x) => x.id === id);
   if (!ing) return null;
 
   return (

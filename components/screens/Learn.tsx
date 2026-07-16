@@ -1,6 +1,7 @@
 'use client';
 
-import { INGREDIENTS, type Ingredient, type Mastery } from '../data';
+import { type Ingredient, type Mastery } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 
 const LEARN_BG = 'linear-gradient(168deg,#F1EBF6 0%,#F8F3EB 55%,#F2ECE1 100%)';
@@ -16,7 +17,16 @@ const masteryColor: Record<Mastery, string> = {
   Locked: '#B0A7BC',
 };
 
-export function Learn({ onOpen }: { onOpen: (id: string) => void }) {
+export function Learn({
+  onOpen,
+  onOpenScanner,
+  onOpenCoach,
+}: {
+  onOpen: (id: string) => void;
+  onOpenScanner: () => void;
+  onOpenCoach: () => void;
+}) {
+  const data = useSkinData();
   return (
     <Screen
       bg={LEARN_BG}
@@ -37,7 +47,7 @@ export function Learn({ onOpen }: { onOpen: (id: string) => void }) {
       <div style={rise(0.05)}>
         <div className="att-eyebrow">Your library</div>
         <div className="att-serif" style={{ fontSize: 30, fontWeight: 500, marginTop: 2 }}>
-          14 ingredients known
+          {data.ingredientsKnown} ingredients known
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, color: '#8A713F' }}>Enthusiast</div>
@@ -56,9 +66,57 @@ export function Learn({ onOpen }: { onOpen: (id: string) => void }) {
         </div>
       </div>
 
+      {/* Actions — scan a product · ask the guide */}
+      <div style={{ ...rise(0.1), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <button
+          onClick={onOpenScanner}
+          style={{
+            textAlign: 'left',
+            cursor: 'pointer',
+            font: 'inherit',
+            color: 'inherit',
+            background: 'rgba(255,255,255,.72)',
+            border: '1px solid rgba(255,255,255,.9)',
+            borderRadius: 18,
+            padding: '12px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 18 }}>🔍</span>
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#40394A' }}>Scan a product</div>
+            <div style={{ fontSize: 10.5, color: 'var(--att-ink-soft)' }}>Read the label for you</div>
+          </div>
+        </button>
+        <button
+          onClick={onOpenCoach}
+          style={{
+            textAlign: 'left',
+            cursor: 'pointer',
+            font: 'inherit',
+            color: 'inherit',
+            background: 'linear-gradient(135deg,rgba(169,149,207,.16),rgba(138,118,180,.12))',
+            border: '1px solid rgba(169,149,207,.4)',
+            borderRadius: 18,
+            padding: '12px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: 18 }}>✦</span>
+          <div>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#40394A' }}>Ask your guide</div>
+            <div style={{ fontSize: 10.5, color: 'var(--att-ink-soft)' }}>Anything about your skin</div>
+          </div>
+        </button>
+      </div>
+
       {/* Grid */}
       <div style={{ ...rise(0.15), display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-        {INGREDIENTS.map((ing) => (
+        {data.ingredients.map((ing) => (
           <Tile key={ing.id} ing={ing} onOpen={onOpen} />
         ))}
         <div

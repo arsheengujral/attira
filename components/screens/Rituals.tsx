@@ -1,6 +1,7 @@
 'use client';
 
-import { MORNING_RITUAL, NIGHT_RITUAL, type Ritual } from '../data';
+import { type Ritual } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 
 const HOME_BG = 'linear-gradient(168deg,#F4EEF7 0%,#F8F3EB 48%,#F2ECE1 100%)';
@@ -15,6 +16,7 @@ export function Rituals({
   nightDone: boolean;
   onOpen: (which: 'am' | 'pm') => void;
 }) {
+  const data = useSkinData();
   return (
     <Screen
       bg={HOME_BG}
@@ -39,7 +41,7 @@ export function Rituals({
       </div>
 
       <RitualCard
-        ritual={MORNING_RITUAL}
+        ritual={data.ritualAM}
         title="Morning ritual"
         tag="AM"
         tagBg="linear-gradient(140deg,#F2E3C8,#E9CFA4)"
@@ -51,7 +53,7 @@ export function Rituals({
       />
 
       <RitualCard
-        ritual={NIGHT_RITUAL}
+        ritual={data.ritualPM}
         title="Night ritual"
         tag="PM"
         tagBg="linear-gradient(140deg,#CFC2E6,#A995CF)"

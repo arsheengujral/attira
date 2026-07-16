@@ -60,6 +60,8 @@ enables semantic (vs. recency) memory retrieval; `CRON_SECRET` guards the job ro
 | `POST /api/auth/signup` | Confirmed sign-up (service role) |
 | `POST /api/jobs/patterns` | Nightly pattern extraction (Bearer `CRON_SECRET`) |
 | `GET /api/memory/export` | Download your memory as JSON |
+| `POST /api/skin/coach` | The Skin Coach — returns answer/ingredient/referral cards |
+| `POST /api/skin/analyze` | Ingredient-list analyser (§12) |
 
 ## Architecture (foundation — CLAUDE.md Phases 1–3)
 
@@ -79,17 +81,35 @@ enables semantic (vs. recency) memory retrieval; `CRON_SECRET` guards the job ro
   the six tracked indicators, the coaching system prompt (scaffold §29 + injected
   memory), and the composite score formula (scaffold §26).
 
-## Status — what's wired vs. what's next
+## Skin module — coach, scanner, safety
 
-**Built:** the foundation above — auth, the Part 3 schema, the Memory Engine, and
-the module framework. All of it compiles, lints, and builds; the flow
-(login → save profile → see it in memory) runs against your own Supabase.
+- **Data wiring** — the screens read a `SkinData` bundle from `useSkinData()`
+  (`components/skin-context.tsx`). Signed in, `app/page.tsx` loads it from the
+  schema via `lib/skin/load.ts` (module_profiles, streaks, module_progress,
+  routines, routine_completions, skin_logs, memory_patterns, products); signed
+  out it's the demo bundle, so the design preview is unchanged. Write-backs live
+  in `lib/skin/actions.ts` (ritual completion, check-in).
+- **Skin Coach** — `lib/skin/coach.ts` + `/api/skin/coach`. The knowledge
+  scaffold (`docs/scaffold-skin.md`, §29) is the system prompt; selective memory
+  is folded in; responses render as cards (never chat bubbles). Runs the safety
+  gate first, so referrals work with no model and no login.
+- **Product Scanner** — `lib/skin/analyze.ts` (deterministic §12 engine) +
+  `/api/skin/analyze`, enriched with the user's profile + shelf.
+- **Safety states** — `lib/skin/safety.ts`: dermatologist referral (§21),
+  pregnancy-safe substitution (§16, auto-applied in the loader), Skin-Reset /
+  barrier damage (§20/§10), purging-vs-breakout (§18). Pure, verifiable functions.
 
-**Deliberately not done yet:** the Skin **screens** (`components/screens/`) are
-still the design prototype driven by `components/data.ts` — they are **not yet
-wired** to the framework or the Memory Engine. Connecting them (reading
-`module_profiles` / `routines` / `streaks` and writing check-ins/completions to
-memory) is the next pass, after login + a saved profile have been tested.
+## Status — what's verified vs. untested
+
+**Verified (demo + degraded):** typecheck, lint, and build all pass; the design
+preview and every screen render; the Product Scanner and the Coach's **safety
+referral** work end-to-end offline; auth/onboarding/account/memory drive cleanly.
+
+**Untested — pending your live Supabase (see `MORNING-CHECKLIST.md`):** the
+DB→screen loader (`lib/skin/load.ts`) and the write-backs (`lib/skin/actions.ts`)
+are written against the migrations but have never run against a real database.
+The **Anthropic** path (Coach answers, nightly patterns) is code-complete but the
+API key wasn't present in the build environment, so it's unverified too.
 
 ## What's here
 

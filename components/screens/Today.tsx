@@ -1,7 +1,7 @@
 'use client';
 
 import type { TabId } from '../data';
-import { DEMO, WEEK_STRIP } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 import { Ring } from '../ui';
 
@@ -35,13 +35,18 @@ export function Today({
   streak,
   nightDone,
   onBeginNight,
+  onOpenWeekly,
+  onOpenCoach,
   onGo,
 }: {
   streak: number;
   nightDone: boolean;
   onBeginNight: () => void;
+  onOpenWeekly: () => void;
+  onOpenCoach: () => void;
   onGo: (t: TabId) => void;
 }) {
+  const data = useSkinData();
   return (
     <Screen bg={HOME_BG} blobs={BLOBS} gap={11}>
       {/* Header */}
@@ -49,7 +54,7 @@ export function Today({
         <div>
           <div className="att-eyebrow">Week 6 of your glow journey</div>
           <div className="att-serif" style={{ fontSize: 29, fontWeight: 500, lineHeight: 1.1, marginTop: 2 }}>
-            Good morning, {DEMO.name}
+            Good morning, {data.name}
           </div>
         </div>
         <div
@@ -86,7 +91,7 @@ export function Today({
         }}
       >
         <Ring
-          value={DEMO.score}
+          value={data.score}
           size={128}
           gradient={[
             { offset: 0, color: '#B9A8D9' },
@@ -95,7 +100,7 @@ export function Today({
           ]}
         >
           <div className="att-serif" style={{ fontSize: 46, fontWeight: 500, lineHeight: 1, color: '#40394A' }}>
-            {DEMO.score}
+            {data.score}
           </div>
           <div
             style={{
@@ -123,10 +128,10 @@ export function Today({
               borderRadius: 999,
             }}
           >
-            ▲ +{DEMO.scoreTrend} this week
+            ▲ +{data.scoreTrend} this week
           </div>
           <div className="att-serif" style={{ fontSize: 19, fontStyle: 'italic', color: '#5C5168', lineHeight: 1.25 }}>
-            Calm, growing more hydrated
+            {data.status}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span
@@ -179,7 +184,7 @@ export function Today({
             <div style={{ fontSize: 10, color: 'var(--att-muted)' }}>freeze ×1</div>
           </div>
           <div style={{ display: 'flex', gap: 6, marginTop: 9, alignItems: 'center' }}>
-            {WEEK_STRIP.map((w, i) => (
+            {data.weekStrip.map((w, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                 <div
                   style={{
@@ -232,16 +237,16 @@ export function Today({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: '#40394A', letterSpacing: 0.3 }}>
-            Skin XP · Level {DEMO.level}
+            Skin XP · Level {data.level}
           </div>
-          <div style={{ fontSize: 10.5, color: 'var(--att-lav)', fontWeight: 600 }}>{DEMO.xpToNext} XP to Level {DEMO.level + 1}</div>
+          <div style={{ fontSize: 10.5, color: 'var(--att-lav)', fontWeight: 600 }}>{data.xpToNext} XP to Level {data.level + 1}</div>
         </div>
         <div style={{ position: 'relative', height: 8, borderRadius: 99, background: '#EBE4F2', overflow: 'hidden', marginTop: 7 }}>
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              width: `${DEMO.xpPct}%`,
+              width: `${data.xpPct}%`,
               borderRadius: 99,
               background: 'linear-gradient(90deg,#B9A8D9,#8A76B4)',
               animation: 'attBar 1.2s .4s cubic-bezier(.25,.7,.25,1) both',
@@ -346,7 +351,7 @@ export function Today({
           }}
         >
           <div style={{ fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', color: 'var(--att-muted)', fontWeight: 600 }}>
-            {DEMO.city} today
+            {data.city} today
           </div>
           <div className="att-serif" style={{ fontSize: 19, color: '#40394A', margin: '3px 0 2px' }}>
             UV 6 · Dry air
@@ -414,12 +419,17 @@ export function Today({
         </div>
       </button>
 
-      {/* Memory-driven insight (a rendered pattern, only when real) */}
-      <div
+      {/* Weekly report entry */}
+      <button
+        onClick={onOpenWeekly}
         style={{
-          ...rise(0.54),
-          background: 'linear-gradient(135deg,rgba(85,137,141,.12),rgba(185,168,217,.12))',
-          border: '1px solid rgba(85,137,141,.2)',
+          ...rise(0.5),
+          textAlign: 'left',
+          cursor: 'pointer',
+          font: 'inherit',
+          color: 'inherit',
+          background: 'rgba(255,255,255,.62)',
+          border: '1px solid rgba(255,255,255,.85)',
           borderRadius: 20,
           padding: '12px 15px',
           display: 'flex',
@@ -427,13 +437,65 @@ export function Today({
           gap: 12,
         }}
       >
-        <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1, color: '#F6F1FA', background: '#55898D', padding: '3px 8px', borderRadius: 999, flex: 'none' }}>
-          NEW
-        </span>
-        <div style={{ fontSize: 12, color: '#4C5B5C', lineHeight: 1.5 }}>
-          <span style={{ fontWeight: 700, color: '#2E5558' }}>Your skin&rsquo;s been calmer every week this month.</span> See what&rsquo;s driving it ›
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 9.5, letterSpacing: 1.4, textTransform: 'uppercase', color: 'var(--att-muted)', fontWeight: 700 }}>
+            Weekly report
+          </div>
+          <div className="att-serif" style={{ fontSize: 18, color: '#40394A', marginTop: 2 }}>
+            Drops Sunday
+          </div>
         </div>
-      </div>
+        <span style={{ fontSize: 12, fontWeight: 700, color: '#F6F1FA', background: 'linear-gradient(135deg,#A995CF,#8A76B4)', padding: '8px 14px', borderRadius: 999 }}>
+          Preview ›
+        </span>
+      </button>
+
+      {/* Memory-driven insight — only when a real pattern exists (spec 1a). */}
+      {data.insight ? (
+        <button
+          onClick={onOpenCoach}
+          style={{
+            ...rise(0.56),
+            textAlign: 'left',
+            cursor: 'pointer',
+            font: 'inherit',
+            color: 'inherit',
+            background: 'linear-gradient(135deg,rgba(85,137,141,.12),rgba(185,168,217,.12))',
+            border: '1px solid rgba(85,137,141,.2)',
+            borderRadius: 20,
+            padding: '12px 15px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1, color: '#F6F1FA', background: '#55898D', padding: '3px 8px', borderRadius: 999, flex: 'none' }}>
+            NEW
+          </span>
+          <div style={{ fontSize: 12, color: '#4C5B5C', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700, color: '#2E5558' }}>{data.insight}</span> Ask what&rsquo;s driving it ›
+          </div>
+        </button>
+      ) : (
+        <button
+          onClick={onOpenCoach}
+          style={{
+            ...rise(0.56),
+            textAlign: 'left',
+            cursor: 'pointer',
+            font: 'inherit',
+            color: 'inherit',
+            background: 'rgba(255,255,255,.55)',
+            border: '1px dashed rgba(138,118,180,.35)',
+            borderRadius: 20,
+            padding: '12px 15px',
+          }}
+        >
+          <div style={{ fontSize: 12, color: '#6E6579', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 700, color: '#5C5168' }}>Ask your skin guide anything.</span> Routines, ingredients, a product you&rsquo;re unsure about ›
+          </div>
+        </button>
+      )}
     </Screen>
   );
 }

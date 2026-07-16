@@ -320,3 +320,69 @@ export const CONSISTENCY: number[] = [
   2, 2, 1, 2, 2, 3, 2, 2, 3, 2, 0, 2, 3, 3, 2, 3, 3, 2, 3, 3, 3,
 ];
 export const HEAT_COLORS = ['#EBE4F2', '#D9CCEC', '#B9A8D9', '#8A76B4'];
+
+/* ── The data bundle every Skin screen reads ──────────────────────────────────
+ * Screens read this via useSkinData() rather than importing constants directly,
+ * so the same components render either the demo (below) or a signed-in user's
+ * real data loaded from Supabase (lib/skin/load.ts). `source` says which.
+ * -------------------------------------------------------------------------- */
+export interface SkinData {
+  source: 'demo' | 'live';
+  name: string;
+  city: string;
+  score: number;
+  scoreTrend: number;
+  status: string; // the italic status line on Today
+  streak: number;
+  freezes: number;
+  level: number;
+  levelTitle: string;
+  xpToNext: number;
+  xpPct: number;
+  ingredientsKnown: number;
+  weekStrip: { d: string; state: 'done' | 'today' | 'upcoming' }[];
+  indicators: Indicator[];
+  checkinCount: number; // for the check-in disclosure line
+  ritualAM: Ritual;
+  ritualPM: Ritual;
+  amDone: boolean;
+  pmDone: boolean;
+  ingredients: Ingredient[];
+  journey: JourneyNode[];
+  consistency: number[];
+  insight: string | null; // a memory pattern surfaced on Today (null → placeholder)
+  pregnant: boolean; // drives pregnancy-safe ritual substitution
+}
+
+/** The disclosure line (scaffold §1 / design 1d), with the real check-in count. */
+export function checkinDisclosure(count: number): string {
+  return `Drawn from your answers, habits and ${count} check-ins — never a medical measurement.`;
+}
+
+export const DEMO_SKIN_DATA: SkinData = {
+  source: 'demo',
+  name: DEMO.name,
+  city: DEMO.city,
+  score: DEMO.score,
+  scoreTrend: DEMO.scoreTrend,
+  status: 'Calm, growing more hydrated',
+  streak: DEMO.streak,
+  freezes: DEMO.freezes,
+  level: DEMO.level,
+  levelTitle: DEMO.levelTitle,
+  xpToNext: DEMO.xpToNext,
+  xpPct: DEMO.xpPct,
+  ingredientsKnown: DEMO.ingredientsKnown,
+  weekStrip: WEEK_STRIP,
+  indicators: INDICATORS,
+  checkinCount: 42,
+  ritualAM: MORNING_RITUAL,
+  ritualPM: NIGHT_RITUAL,
+  amDone: true,
+  pmDone: false,
+  ingredients: INGREDIENTS,
+  journey: JOURNEY,
+  consistency: CONSISTENCY,
+  insight: 'Your skin’s been calmer every week this month.',
+  pregnant: false,
+};

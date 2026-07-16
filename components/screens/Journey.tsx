@@ -1,11 +1,13 @@
 'use client';
 
-import { JOURNEY, type JourneyNode } from '../data';
+import { type JourneyNode } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 
 const HOME_BG = 'linear-gradient(168deg,#F4EEF7 0%,#F8F3EB 48%,#F2ECE1 100%)';
 
 export function Journey({ streak, onBack }: { streak: number; onBack: () => void }) {
+  const data = useSkinData();
   return (
     <>
       <button className="att-back" onClick={onBack} aria-label="Back">
@@ -52,7 +54,7 @@ export function Journey({ streak, onBack }: { streak: number; onBack: () => void
             }}
           />
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%', padding: '6px 0' }}>
-            {JOURNEY.map((node) => (
+            {data.journey.map((node) => (
               <Node key={node.day} node={node} />
             ))}
           </div>

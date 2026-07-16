@@ -1,6 +1,7 @@
 'use client';
 
-import { CONSISTENCY, HEAT_COLORS } from '../data';
+import { HEAT_COLORS } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 import { CompareSlider } from '../ui';
 
@@ -18,6 +19,7 @@ export function You({
   onOpenJourney: () => void;
   onReplayCeremony: () => void;
 }) {
+  const data = useSkinData();
   return (
     <Screen
       bg={HOME_BG}
@@ -79,7 +81,7 @@ export function You({
 
         <div style={{ fontSize: 11, fontWeight: 600, color: '#40394A', marginTop: 10 }}>Ritual consistency</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(21,1fr)', gap: 3, marginTop: 7 }}>
-          {CONSISTENCY.map((v, i) => (
+          {data.consistency.map((v, i) => (
             <div key={i} style={{ height: 9, borderRadius: 2.5, background: HEAT_COLORS[v] }} />
           ))}
         </div>

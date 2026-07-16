@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { INDICATORS, CHECKIN_DISCLOSURE } from '../data';
+import { checkinDisclosure } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 import { MiniRing } from '../ui';
 
@@ -90,6 +91,7 @@ export function CheckInFlow({ onDone }: { onDone: () => void }) {
 }
 
 function Processing() {
+  const data = useSkinData();
   return (
     <Screen bg={CHECKIN_BG} pad="70px 34px 60px" gap={26} style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
       <div style={{ position: 'relative', width: 190, height: 190 }}>
@@ -154,7 +156,7 @@ function Processing() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: 280 }}>
         <ProcRow done>Your 4 answers, noted</ProcRow>
-        <ProcRow done>Compared with 42 past check-ins</ProcRow>
+        <ProcRow done>Compared with {data.checkinCount} past check-ins</ProcRow>
         <ProcRow>Writing your skin story…</ProcRow>
       </div>
 
@@ -193,6 +195,7 @@ function ProcRow({ done, children }: { done?: boolean; children: React.ReactNode
 }
 
 function Results({ onDone }: { onDone: () => void }) {
+  const data = useSkinData();
   return (
     <Screen
       bg={RESULTS_BG}
@@ -232,7 +235,7 @@ function Results({ onDone }: { onDone: () => void }) {
 
       {/* 6 indicators */}
       <div style={{ ...rise(0.25), display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-        {INDICATORS.map((ind, i) => (
+        {data.indicators.map((ind, i) => (
           <div
             key={ind.key}
             style={{
@@ -267,7 +270,7 @@ function Results({ onDone }: { onDone: () => void }) {
       </div>
 
       <div style={{ ...rise(0.48), fontSize: 11, color: 'var(--att-muted)', textAlign: 'center', lineHeight: 1.5 }}>
-        {CHECKIN_DISCLOSURE}
+        {checkinDisclosure(data.checkinCount)}
       </div>
 
       <button onClick={onDone} className="att-cta" style={{ alignSelf: 'center', padding: '11px 26px', fontSize: 12.5 }}>

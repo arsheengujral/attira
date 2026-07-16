@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { MORNING_RITUAL, NIGHT_RITUAL, type Ritual, type RitualStep } from '../data';
+import { type Ritual, type RitualStep } from '../data';
+import { useSkinData } from '../skin-context';
 import { Screen } from '../shell';
 import { SwipeToComplete } from '../ui';
 
@@ -117,7 +118,8 @@ export function RitualScreen({
   onBack: () => void;
   onComplete: () => void;
 }) {
-  const ritual: Ritual = which === 'pm' ? NIGHT_RITUAL : MORNING_RITUAL;
+  const data = useSkinData();
+  const ritual: Ritual = which === 'pm' ? data.ritualPM : data.ritualAM;
   const t = which === 'pm' ? NIGHT_THEME : MORNING_THEME;
 
   const initial = useMemo(
