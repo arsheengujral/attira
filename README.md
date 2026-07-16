@@ -27,6 +27,70 @@ npm run dev      # http://localhost:3000
 
 Other scripts: `npm run build`, `npm run typecheck`, `npm run lint`.
 
+The app boots in a **degraded mode** with no configuration — the design preview
+works and the auth-gated pages explain what's missing — so you only wire up what
+you're testing.
+
+## Setting up the backend (auth + database + Memory Engine)
+
+1. **Create a Supabase project** → https://supabase.com.
+2. **Run the migrations** in order in the SQL editor (or `supabase db push`):
+   - `supabase/migrations/0001_init.sql` — the full Part 3 schema + auth trigger
+   - `supabase/migrations/0002_rls.sql` — per-user Row Level Security
+   - `supabase/migrations/0003_memory.sql` — the semantic-retrieval RPC + index
+3. **Set env** — copy `.env.example` → `.env.local` and fill in
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and
+   `SUPABASE_SERVICE_ROLE_KEY` (from Project settings → API).
+4. `npm run dev`, then go to **`/auth`** → create an account → you land on
+   **`/onboarding`** → save your profile → **`/account`** shows it back to you,
+   and **`/memory`** shows the facts it captured.
+
+Optional: `ANTHROPIC_API_KEY` enables the nightly pattern job; `EMBEDDINGS_API_KEY`
+enables semantic (vs. recency) memory retrieval; `CRON_SECRET` guards the job route.
+
+## Routes
+
+| Route | What it is |
+|---|---|
+| `/` | The Skin design preview (the imported v2 screens) |
+| `/auth` | Sign in / create account (email + password) |
+| `/onboarding` | Profile intake — saves to `profiles` + seeds memory |
+| `/account` | Your saved profile; sign out |
+| `/memory` | View / export / delete everything remembered; consent toggles |
+| `POST /api/auth/signup` | Confirmed sign-up (service role) |
+| `POST /api/jobs/patterns` | Nightly pattern extraction (Bearer `CRON_SECRET`) |
+| `GET /api/memory/export` | Download your memory as JSON |
+
+## Architecture (foundation — CLAUDE.md Phases 1–3)
+
+- **Auth + shell** — `@supabase/ssr` (browser/server/admin clients in
+  `lib/supabase/`), session refresh + route protection in `middleware.ts`.
+- **Database (Part 3)** — `supabase/migrations/`. Every table is per-user with
+  RLS (`auth.uid() = user_id`). `module_profiles` / `module_plans` /
+  `module_progress` are **generic** — new domains need no migration.
+- **Memory Engine (Part 2)** — `lib/memory/`. Facts, episodes (embedded),
+  patterns, consent; `retrieveContext()` injects core facts + the active
+  module's profile + the top-k relevant episodes/patterns (semantic, or recency
+  when embeddings are off); the `/memory` page is full user control; the nightly
+  job derives patterns from recent episodes.
+- **Module framework (Part 1)** — `lib/modules/`. The `Module` contract
+  (`assess → profile → plan → track → coach → score`) + a registry. Skin is
+  registered as a config module (`lib/modules/skin/`) — intake, plan skeleton,
+  the six tracked indicators, the coaching system prompt (scaffold §29 + injected
+  memory), and the composite score formula (scaffold §26).
+
+## Status — what's wired vs. what's next
+
+**Built:** the foundation above — auth, the Part 3 schema, the Memory Engine, and
+the module framework. All of it compiles, lints, and builds; the flow
+(login → save profile → see it in memory) runs against your own Supabase.
+
+**Deliberately not done yet:** the Skin **screens** (`components/screens/`) are
+still the design prototype driven by `components/data.ts` — they are **not yet
+wired** to the framework or the Memory Engine. Connecting them (reading
+`module_profiles` / `routines` / `streaks` and writing check-ins/completions to
+memory) is the next pass, after login + a saved profile have been tested.
+
 ## What's here
 
 The five tabs — **Today · Check-in · Rituals · Learn · You** — plus the
