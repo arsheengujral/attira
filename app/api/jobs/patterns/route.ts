@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import { env, isAnthropicConfigured } from '@/lib/env';
+import { env } from '@/lib/env';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 /**
- * Nightly pattern extraction — reads each user's recent episodes and writes
- * derived insights to memory_patterns. This is the job that turns a timeline
- * into "you always break out on the jawline in the luteal phase". Runs offline
- * with the admin client (bypasses RLS), guarded by a shared CRON_SECRET.
+ * Nightly pattern extraction — 100% rule-based, zero cost, no model. It reads
+ * each active user's recent episodes and derives a few durable insights with
+ * deterministic detectors, writing new ones to memory_patterns (skipping
+ * duplicates). Runs offline with the admin client, guarded by CRON_SECRET.
  *
- * Schedule it however you like (Vercel Cron, Supabase scheduled function, an
- * external cron) with:  POST /api/jobs/patterns  Authorization: Bearer <CRON_SECRET>
+ *   POST /api/jobs/patterns   Authorization: Bearer <CRON_SECRET>
  */
 
-const MODEL = 'claude-haiku-4-5-20251001'; // fast/mid tier — batched offline work
 const LOOKBACK_DAYS = 14;
-const MAX_USERS = 200;
-const MAX_EPISODES = 30;
+const MAX_USERS = 500;
+const MAX_EPISODES = 60;
 
 function authorized(req: NextRequest): boolean {
   if (!env.cronSecret) return false;
@@ -28,26 +25,15 @@ function authorized(req: NextRequest): boolean {
   return header === `Bearer ${env.cronSecret}` || x === env.cronSecret;
 }
 
+interface Episode { content: string; type: string | null; occurred_at: string }
+
 export async function POST(req: NextRequest) {
-  if (!authorized(req)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  if (!authorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const admin = createAdminSupabase();
-  if (!admin) {
-    return NextResponse.json({ error: 'Supabase admin not configured.' }, { status: 503 });
-  }
-  if (!isAnthropicConfigured()) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'Model not configured.' });
-  }
+  if (!admin) return NextResponse.json({ error: 'Supabase admin not configured.' }, { status: 503 });
 
-  const anthropic = new Anthropic({ apiKey: env.anthropicKey });
   const cutoff = new Date(Date.now() - LOOKBACK_DAYS * 864e5).toISOString();
-
-  // Users with recent activity.
-  const { data: recent } = await admin
-    .from('memory_episodes')
-    .select('user_id')
-    .gte('occurred_at', cutoff);
+  const { data: recent } = await admin.from('memory_episodes').select('user_id').gte('occurred_at', cutoff);
   const userIds = Array.from(new Set((recent ?? []).map((r) => r.user_id))).slice(0, MAX_USERS);
 
   let processed = 0;
@@ -57,61 +43,77 @@ export async function POST(req: NextRequest) {
     try {
       const { data: episodes } = await admin
         .from('memory_episodes')
-        .select('id, content, occurred_at')
+        .select('content, type, occurred_at')
         .eq('user_id', userId)
         .gte('occurred_at', cutoff)
         .order('occurred_at', { ascending: false })
         .limit(MAX_EPISODES);
       if (!episodes || episodes.length < 3) continue;
 
-      const timeline = episodes
-        .map((e) => `- (${new Date(e.occurred_at).toISOString().slice(0, 10)}) ${e.content}`)
-        .join('\n');
+      const derived = detectPatterns(episodes as Episode[]);
+      if (!derived.length) {
+        processed++;
+        continue;
+      }
 
-      const msg = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 500,
-        system:
-          'You find durable behavioural patterns in a person\'s recent activity for a personal-care companion. ' +
-          'Return 0–3 concise, specific, non-obvious patterns. Cosmetic/behavioural only — never medical claims or ' +
-          'diagnoses, never judgemental. Reply with ONLY a JSON array of objects {"insight": string, "confidence": number 0..1}. ' +
-          'If nothing meaningful stands out, return [].',
-        messages: [{ role: 'user', content: `Recent activity:\n${timeline}` }],
-      });
+      // Skip insights that already exist (dedupe).
+      const { data: existing } = await admin.from('memory_patterns').select('insight').eq('user_id', userId);
+      const seen = new Set((existing ?? []).map((p) => (p.insight as string).toLowerCase()));
 
-      const text = msg.content.find((c) => c.type === 'text');
-      if (!text || text.type !== 'text') continue;
-      const parsed = safeParse(text.text);
-      const evidenceIds = episodes.map((e) => e.id);
-
-      for (const p of parsed) {
-        if (!p.insight) continue;
-        await admin.from('memory_patterns').insert({
-          user_id: userId,
-          insight: p.insight,
-          evidence_ids: evidenceIds,
-          confidence: typeof p.confidence === 'number' ? Math.max(0, Math.min(1, p.confidence)) : 0.6,
-        });
+      for (const d of derived) {
+        if (seen.has(d.insight.toLowerCase())) continue;
+        await admin.from('memory_patterns').insert({ user_id: userId, insight: d.insight, evidence_ids: [], confidence: d.confidence });
         written++;
       }
       processed++;
     } catch {
-      // One user's failure never stops the batch.
       continue;
     }
   }
 
-  return NextResponse.json({ ok: true, users: userIds.length, processed, patternsWritten: written });
+  return NextResponse.json({ ok: true, mode: 'rule-based', users: userIds.length, processed, patternsWritten: written });
 }
 
-function safeParse(text: string): { insight?: string; confidence?: number }[] {
-  try {
-    const start = text.indexOf('[');
-    const end = text.lastIndexOf(']');
-    if (start === -1 || end === -1) return [];
-    const arr = JSON.parse(text.slice(start, end + 1));
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
+// ── deterministic detectors (no model) ───────────────────────────────────────
+
+const CONCERN_KEYWORDS: [string, string][] = [
+  ['acne', 'breakouts'],
+  ['pigment', 'pigmentation'],
+  ['dry', 'dryness'],
+  ['redness', 'redness'],
+  ['pore', 'pores'],
+  ['dull', 'dullness'],
+  ['texture', 'texture'],
+  ['oil', 'oiliness'],
+  ['sensitiv', 'sensitivity'],
+];
+
+function detectPatterns(episodes: Episode[]): { insight: string; confidence: number }[] {
+  const out: { insight: string; confidence: number }[] = [];
+  const text = episodes.map((e) => e.content.toLowerCase());
+  const joined = text.join(' \n ');
+
+  // 1) Fragrance sensitivity.
+  const fragranceHits = text.filter((c) => /fragrance|parfum/.test(c) && /(react|irritat|sting|bump|red|broke out)/.test(c)).length;
+  if (fragranceHits >= 1) out.push({ insight: 'Sensitive to fragrance — we’ll flag fragranced products for you.', confidence: 0.75 });
+
+  // 2) Cyclical jawline flares.
+  const jawline = text.filter((c) => /jawline/.test(c)).length;
+  if (jawline >= 2 && /(cycle|luteal|before (my )?period|day 2\d)/.test(joined)) {
+    out.push({ insight: 'Your jawline tends to flare in the luteal phase — we can anticipate it.', confidence: 0.6 });
   }
+
+  // 3) Ritual consistency this fortnight.
+  const rituals = episodes.filter((e) => e.type === 'ritual').length;
+  if (rituals >= 8) out.push({ insight: 'You’ve been remarkably consistent with your rituals this fortnight.', confidence: 0.8 });
+
+  // 4) A recurring focus concern.
+  let top: { name: string; n: number } | null = null;
+  for (const [kw, name] of CONCERN_KEYWORDS) {
+    const n = text.filter((c) => c.includes(kw)).length;
+    if (n >= 3 && (!top || n > top.n)) top = { name, n };
+  }
+  if (top) out.push({ insight: `You keep coming back to ${top.name} — let’s make it the plan’s priority.`, confidence: 0.6 });
+
+  return out.slice(0, 3);
 }

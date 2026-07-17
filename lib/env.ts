@@ -15,9 +15,8 @@ export const env = {
 
   // Server-only secrets.
   supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-  anthropicKey: process.env.ANTHROPIC_API_KEY ?? '',
   // Optional embeddings provider (OpenAI-compatible). Memory retrieval degrades
-  // to recency when this is absent — it is never required.
+  // to recency when this is absent — it is never required, and off by default.
   embeddingsApiKey: process.env.EMBEDDINGS_API_KEY ?? '',
   embeddingsUrl:
     process.env.EMBEDDINGS_API_URL ?? 'https://api.openai.com/v1/embeddings',
@@ -31,7 +30,5 @@ export const isSupabaseConfigured = (): boolean =>
 
 export const isAdminConfigured = (): boolean =>
   Boolean(env.supabaseUrl && env.supabaseServiceKey);
-
-export const isAnthropicConfigured = (): boolean => Boolean(env.anthropicKey);
 
 export const isEmbeddingsConfigured = (): boolean => Boolean(env.embeddingsApiKey);

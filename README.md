@@ -45,8 +45,9 @@ you're testing.
    **`/onboarding`** → save your profile → **`/account`** shows it back to you,
    and **`/memory`** shows the facts it captured.
 
-Optional: `ANTHROPIC_API_KEY` enables the nightly pattern job; `EMBEDDINGS_API_KEY`
-enables semantic (vs. recency) memory retrieval; `CRON_SECRET` guards the job route.
+No model API key is needed — the Coach, personalized results, and the nightly job
+are all rule-based (see below). Optional: `EMBEDDINGS_API_KEY` enables semantic
+(vs. recency) memory retrieval; `CRON_SECRET` guards the nightly job route.
 
 ## Routes
 
@@ -89,10 +90,12 @@ enables semantic (vs. recency) memory retrieval; `CRON_SECRET` guards the job ro
   routines, routine_completions, skin_logs, memory_patterns, products); signed
   out it's the demo bundle, so the design preview is unchanged. Write-backs live
   in `lib/skin/actions.ts` (ritual completion, check-in).
-- **Skin Coach** — `lib/skin/coach.ts` + `/api/skin/coach`. The knowledge
-  scaffold (`docs/scaffold-skin.md`, §29) is the system prompt; selective memory
-  is folded in; responses render as cards (never chat bubbles). Runs the safety
-  gate first, so referrals work with no model and no login.
+- **Skin Coach** — `lib/skin/coach.ts` + `/api/skin/coach`. **Fully rule-based,
+  zero cost, no LLM API.** It matches each question to the static knowledge in
+  `lib/skin/knowledge.ts` (protocols §6, archetypes §11, myths §22,
+  troubleshooting §27), the ingredient matrix, and the safety rules, then returns
+  formatted cards (never chat bubbles). Safety (referral) runs first; answers are
+  lightly personalized from the saved skin profile.
 - **Product Scanner** — `lib/skin/analyze.ts` (deterministic §12 engine) +
   `/api/skin/analyze`, enriched with the user's profile + shelf.
 - **Safety states** — `lib/skin/safety.ts`: dermatologist referral (§21),
@@ -105,11 +108,12 @@ enables semantic (vs. recency) memory retrieval; `CRON_SECRET` guards the job ro
 preview and every screen render; the Product Scanner and the Coach's **safety
 referral** work end-to-end offline; auth/onboarding/account/memory drive cleanly.
 
+The Skin Coach (rule-based) is verified — every intent (ingredient, protocol,
+purging, myth, routine, troubleshooting, referral) returns real cards offline.
+
 **Untested — pending your live Supabase (see `MORNING-CHECKLIST.md`):** the
 DB→screen loader (`lib/skin/load.ts`) and the write-backs (`lib/skin/actions.ts`)
 are written against the migrations but have never run against a real database.
-The **Anthropic** path (Coach answers, nightly patterns) is code-complete but the
-API key wasn't present in the build environment, so it's unverified too.
 
 ## What's here
 

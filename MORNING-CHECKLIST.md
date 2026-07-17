@@ -14,9 +14,9 @@ build, 🟡 = written but **untested pending a live DB**, ⚪ = needs an optiona
    > (Database → Extensions → enable `vector`), then re-run it.
 3. **Env:** `cp .env.example .env.local`, then fill from Supabase → Project settings → API:
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-   - *(optional)* `ANTHROPIC_API_KEY` → turns on the Coach's conversational answers + the nightly job
    - *(optional)* `EMBEDDINGS_API_KEY` → semantic memory retrieval (else recency)
    - *(optional)* `CRON_SECRET` → to trigger the nightly pattern job
+   - **No LLM / Anthropic key** — the Coach and nightly job are rule-based and free.
 4. `npm install && npm run dev` → http://localhost:3000
 
 ## 1. Auth 🟢
@@ -56,16 +56,18 @@ build, 🟡 = written but **untested pending a live DB**, ⚪ = needs an optiona
   and a **Verdict** with a reason. (Signed in, it also uses your profile + product shelf for
   redundancy/conflict.)
 
-## 6. Skin Coach 🟢 safety / ⚪ conversation
+## 6. Skin Coach 🟢 (rule-based — no key, zero cost)
 
-- **Learn → Ask your guide** (or Today's insight card).
-- **Safety (works with no key):** type `I have a mole that is changing and bleeding` → you get a
-  calm **"Worth seeing a dermatologist"** card + an interim gentle routine. (Never red/alarming.)
-- **Conversation (needs `ANTHROPIC_API_KEY`):** ask `What does niacinamide do?` →
-  - with a key: an answer card (+ a tappable Niacinamide ingredient card).
-  - without a key: a card telling you to add the key — everything else still works.
-  - ⚠️ **Note:** the Anthropic key was **not present in the build environment**, so the live model
-    path is **unverified** — this is the most likely place to hit a first-run issue.
+- **Learn → Ask your guide** (or Today's insight card). Try each:
+  - `What does niacinamide do?` → an ingredient card + an answer card (does / when / results / myth).
+  - `Help with pigmentation` → the full protocol card (AM · PM · timeline · the one thing).
+  - `Is my skin purging?` → the purging-vs-breaking-out explainer.
+  - `Do pores open and close?` → a myth-correction card.
+  - `Build me a simple routine` → the 3-step minimum + archetypes.
+  - `I have a mole that is changing and bleeding` → a calm **"Worth seeing a dermatologist"** card
+    + interim routine (never red/alarming).
+- All of this is pulled from `docs/scaffold-skin.md` — **already verified offline**. Signed in,
+  answers lightly personalise to your saved lead concern.
 
 ## 7. Write-backs 🟡 (untested — check these rows appear in Supabase)
 
@@ -79,7 +81,7 @@ While signed in on **`/`**:
 - Then reload `/` — the score/streak/indicators should now reflect the real rows (step 4's
   placeholders get replaced).
 
-## 8. Nightly pattern job ⚪ (needs `ANTHROPIC_API_KEY` + `CRON_SECRET`)
+## 8. Nightly pattern job 🟢 rule-based (needs `CRON_SECRET`)
 
 - After a few episodes exist, trigger it manually:
   ```bash
@@ -95,7 +97,7 @@ While signed in on **`/`**:
 1. **Write-backs** (`lib/skin/actions.ts`) — never run against a real DB.
 2. **The live loader** (`lib/skin/load.ts`) — the DB→screen mapping, esp. routines→ritual steps
    and completions→week/heat strips.
-3. **The Anthropic path** in the Coach + nightly job — no key was available to exercise it.
 
-If any of these misbehave, tell me what you saw and I'll fix it fast — the pure logic (safety,
-analyzer) and the whole degraded/demo path are already verified.
+Everything else — the whole demo/degraded path, the rule-based Coach (all intents), the Product
+Scanner, and the safety/analyzer logic — is already verified. There is no LLM anywhere, so nothing
+costs money to run. If the two untested paths misbehave against your DB, tell me what you saw.
