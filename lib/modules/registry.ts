@@ -1,5 +1,6 @@
 import type { Module } from './types';
 import { skinModule } from './skin';
+import { styleModule } from './style';
 
 /**
  * The module registry. Every domain plugs in here; the shell renders any
@@ -21,3 +22,4 @@ export function listModules(): Module[] {
 
 // ── Registered modules ──────────────────────────────────────────────────────
 registerModule(skinModule);
+registerModule(styleModule);
