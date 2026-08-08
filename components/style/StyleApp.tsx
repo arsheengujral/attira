@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { PhoneFrame } from '../shell';
 import { Assessment } from './Assessment';
 import { StyleResultView } from './StyleResult';
@@ -36,10 +37,10 @@ export default function StyleApp({ initial }: { initial?: (StyleProfileInput & R
   return (
     <div className="att-root">
       <div className="att-stage">
-        <div className="att-brandbar">
+        <Link className="att-brandbar" href="/home" style={{ textDecoration: 'none' }}>
           <span className="att-word">ATTIRA</span>
           <span className="att-tag">Style</span>
-        </div>
+        </Link>
         <PhoneFrame>
           <div key={mode} className="att-screen-enter" style={{ position: 'absolute', inset: 0 }}>
             {mode === 'assessment' || !result ? (

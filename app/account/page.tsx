@@ -111,8 +111,9 @@ export default async function AccountPage() {
       )}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, borderTop: '1px solid rgba(36,30,46,.1)', paddingTop: 18 }}>
+        <Link href="/home" style={pill}>Home</Link>
         <Link href="/memory" style={pill}>Your memory</Link>
-        <Link href="/" style={pill}>Skin</Link>
+        <Link href="/skin" style={pill}>Skin</Link>
         <Link href="/style" style={pill}>Style</Link>
         <form action={signOut} style={{ marginLeft: 'auto' }}>
           <button type="submit" style={{ ...pill, border: '1px solid rgba(36,30,46,.15)', background: 'transparent', cursor: 'pointer', color: INK_SOFT }}>

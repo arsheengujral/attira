@@ -8,7 +8,7 @@ import { PageShell, Field, TextInput, PrimaryButton, LAV } from '@/components/fo
 function AuthInner() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') || '/account';
+  const next = params.get('next') || '/home';
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');

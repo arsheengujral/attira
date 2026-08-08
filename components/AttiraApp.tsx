@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { TabId, SkinData } from './data';
 import { DEMO_SKIN_DATA } from './data';
 import { SkinDataProvider } from './skin-context';
@@ -88,10 +89,10 @@ export default function AttiraApp({ data }: { data?: SkinData }) {
     <SkinDataProvider value={d}>
       <div className="att-root">
         <div className="att-stage">
-          <div className="att-brandbar">
+          <Link className="att-brandbar" href="/home" style={{ textDecoration: 'none' }}>
             <span className="att-word">ATTIRA</span>
             <span className="att-tag">Skin</span>
-          </div>
+          </Link>
           <PhoneFrame>
             <div key={tab} className="att-screen-enter" style={{ position: 'absolute', inset: 0 }}>
               {screen()}
