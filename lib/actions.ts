@@ -40,8 +40,8 @@ export async function saveProfile(formData: FormData) {
   // so every module can read them from day one.
   await seedFactsFromProfile(user.id, patch);
 
-  revalidatePath('/account');
-  redirect('/account');
+  revalidatePath('/home');
+  redirect('/home');
 }
 
 export async function signOut() {

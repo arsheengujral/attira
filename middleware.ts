@@ -10,7 +10,7 @@ import { createServerClient } from '@supabase/ssr';
  * development and the design preview.
  */
 
-const PROTECTED_PREFIXES = ['/account', '/onboarding', '/memory'];
+const PROTECTED_PREFIXES = ['/home', '/account', '/onboarding', '/memory'];
 
 function isProtected(pathname: string): boolean {
   return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));

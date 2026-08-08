@@ -1,21 +1,16 @@
-import AttiraApp from '@/components/AttiraApp';
-import { DEMO_SKIN_DATA } from '@/components/data';
+import { redirect } from 'next/navigation';
 import { getUser } from '@/lib/supabase/server';
-import { loadSkinData } from '@/lib/skin/load';
+import { Landing } from '@/components/Landing';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * ATTIRA — the Skin module. Loads the signed-in user's real data (Supabase) and
- * hands it to the screens; falls back to the demo bundle when signed out or
- * unconfigured, so the design preview always works.
+ * The front door. Signed-in visitors go straight to their dashboard; everyone
+ * else sees the landing page. (When Supabase isn't configured, getUser() is
+ * null, so the landing shows — the app is still previewable.)
  */
 export default async function Page() {
   const user = await getUser();
-  let data = DEMO_SKIN_DATA;
-  if (user) {
-    const live = await loadSkinData(user.id, user.email ?? undefined);
-    if (live) data = live;
-  }
-  return <AttiraApp data={data} />;
+  if (user) redirect('/home');
+  return <Landing />;
 }
